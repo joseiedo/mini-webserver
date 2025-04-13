@@ -28,22 +28,24 @@ public class Main {
 
         private void handleClient(Socket clientSocket) {
             try (PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true)) {
-                HttpParser parser = new HttpParser(clientSocket.getInputStream());
+                HttpRequest parser = new HttpRequest(clientSocket.getInputStream());
 
                 System.out.println(parser.readBodyAsString());
 
-                // Send a basic HTTP response
-                output.println("HTTP/1.1 200 OK");
-                output.println("Content-Type: text/plain; charset=UTF-8");
-                output.println();
-                output.println("Hello, World! This is a simple HTTP server.");
+                HttpResponse response = HttpResponse.builder()
+                        .status(HttpStatus.OK)
+                        .header("Content-Type", "text/plain; charset=UTF-8")
+                        .body("Hello, World! This is a simple HTTP server.".getBytes())
+                        .build();
+
+                output.println(response.toString());
             } catch (IOException e) {
                 System.err.println("Error handling client: " + e.getMessage());
             }
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Server server = new Server(8080);
         server.start();
     }

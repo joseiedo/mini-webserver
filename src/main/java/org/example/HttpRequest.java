@@ -2,13 +2,12 @@ package org.example;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-public class HttpParser {
+public class HttpRequest {
 
     HttpMethod method;
     String target;
@@ -18,7 +17,7 @@ public class HttpParser {
 
     Logger logger = Logger.getLogger(this.getClass().getName());
 
-    public HttpParser(InputStream in) throws IOException {
+    public HttpRequest(InputStream in) throws IOException {
         InputStreamReader inputStreamReader = new InputStreamReader(in);
         parseRequestLine(inputStreamReader);
         parseHeaders(inputStreamReader);
