@@ -1,11 +1,11 @@
 package org.example;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class HttpParser {
@@ -14,45 +14,83 @@ public class HttpParser {
     String target;
     String version;
     Map<String, String> headers = new HashMap<>();
+    byte[] body;
 
     Logger logger = Logger.getLogger(this.getClass().getName());
 
     public HttpParser(InputStream in) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        parseRequestLine(reader);
-        parseHeaders(reader);
+        InputStreamReader inputStreamReader = new InputStreamReader(in);
+        parseRequestLine(inputStreamReader);
+        parseHeaders(inputStreamReader);
+        parseBody(inputStreamReader);
     }
 
-    public void parseRequestLine(BufferedReader reader) throws IOException {
+    public void parseRequestLine(InputStreamReader reader) throws IOException {
         logger.info("Parsing request line...");
-        String requestLine = reader.readLine();
-        if (requestLine == null || requestLine.isEmpty()) {
-            throw new IOException("Invalid HTTP request line");
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        for (int nextByte; (nextByte = reader.read()) != -1; ) {
+            if (nextByte == '\r') break;
+            buffer.write(nextByte);
         }
 
-        logger.info(requestLine);
-
+        String requestLine = buffer.toString(StandardCharsets.UTF_8);
+        logger.info("Request line: " + requestLine);
         String[] pieces = requestLine.split(" ");
+
         if (pieces.length != 3) {
-            throw new IOException("Invalid HTTP request line");
+            throw new RuntimeException("Invalid request line");
         }
 
         this.method = HttpMethod.fromString(pieces[0]);
         this.target = pieces[1];
         this.version = pieces[2];
 
+        if (!Objects.equals(version, "HTTP/1.1")) {
+            throw new IllegalArgumentException("Wrong version! keep using HTTP/1.1 please :)");
+        }
+
         logger.info("Request line parsed!");
     }
 
-    public void parseHeaders(BufferedReader reader) throws IOException {
+    public void parseHeaders(InputStreamReader reader) throws IOException {
         logger.info("Parsing headers...");
-        for(String line; !(line = reader.readLine()).isEmpty();){
-            System.out.println(line);
-            String[] header = line.split(": ");
-            String key = header[0];
-            String value = header[1];
-            headers.put(key, value);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        for (int nextByte; (nextByte = reader.read()) != -1; ) {
+            if (nextByte == '\r') {
+                if(buffer.size() == 0) break;
+                String line = buffer.toString(StandardCharsets.UTF_8);
+                logger.info("Header: " + line);
+                String[] header = line.split(": ");
+                String key = header[0];
+                String value = header[1];
+                this.headers.put(key, value);
+                buffer.reset();
+            } else if (nextByte != '\n') {
+                buffer.write(nextByte);
+            }
         }
+
+
+        // Trick to consume the '\n' character after the '\r' after the headers >:)
+        if (reader.read() != '\n') {
+            throw new IOException("Malformed header: expected '\\n' after '\\r'");
+        }
+
         logger.info("All headers parsed!");
+    }
+
+    public void parseBody(InputStreamReader reader) throws IOException {
+        logger.info("Parsing body...");
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        for (int nextByte; (nextByte = reader.read()) != -1;) {
+            buffer.write(nextByte);
+        }
+        this.body = buffer.toByteArray();
+        logger.info("Body parsed!");
+    }
+
+    public String readBodyAsString() {
+        return new String(this.body, StandardCharsets.UTF_8);
     }
 }

@@ -10,11 +10,11 @@ import java.io.InputStream;
 public class HttpParserTest extends TestCase {
 
     public void testShouldParseWithNoErrors() throws IOException {
-        String request = "POST /path HTTP/1.1\n" +
-                "Host: localhost\n" +
-                "User-Agent: curl/7.64.1\n" +
-                "Accept: */*\n" +
-                "\n";
+        String request = "POST /path HTTP/1.1\r\n" +
+        "Host: localhost\r\n" +
+        "User-Agent: curl/7.64.1\r\n" +
+        "Accept: */*\r\n" +
+        "\r\n" + "Hello, world!";
 
         InputStream inputStream = new ByteArrayInputStream(request.getBytes());
         HttpParser parser = new HttpParser(inputStream);
@@ -28,5 +28,8 @@ public class HttpParserTest extends TestCase {
         assertEquals("localhost", parser.headers.get("Host"));
         assertEquals("curl/7.64.1", parser.headers.get("User-Agent"));
         assertEquals("*/*", parser.headers.get("Accept"));
+
+        // Asserting body...
+        assertEquals("Hello, world!", parser.readBodyAsString());
     }
 }
