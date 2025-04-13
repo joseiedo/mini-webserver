@@ -69,6 +69,12 @@ public class HttpResponse {
                 throw new IllegalArgumentException("Status message cannot be null or empty");
             }
 
+            if (this.body != null) {
+                headers.put("Content-Length", String.valueOf(this.body.length));
+            } else {
+                headers.put("Content-Length", "0");
+            }
+
             HttpResponse response = new HttpResponse();
             response.version = this.version;
             response.status = this.status;

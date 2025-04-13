@@ -11,10 +11,15 @@ public class HttpResponseTest extends TestCase {
                 .header("Content-Type", "text/plain")
                 .body("Hello, World!".getBytes())
                 .build();
+        String expected = """
+                HTTP/1.1 200 OK\r
+                Content-Length: 13\r
+                Content-Type: text/plain\r
+                \r
+                Hello, World!""";
 
-        assertEquals("HTTP/1.1", response.toString().split(" ")[0]);
-        assertTrue(response.toString().contains("200 OK"));
-        assertTrue(response.toString().contains("Content-Type: text/plain"));
-        assertTrue(response.toString().contains("Hello, World!"));
+        String result = response.toString();
+
+        assertEquals(expected, result);
     }
 }
