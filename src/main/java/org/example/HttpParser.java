@@ -82,11 +82,23 @@ public class HttpParser {
 
     public void parseBody(InputStreamReader reader) throws IOException {
         logger.info("Parsing body...");
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        for (int nextByte; (nextByte = reader.read()) != -1;) {
-            buffer.write(nextByte);
+        String headerContentLength = headers.get("Content-Length");
+        if (headerContentLength != null) {
+            int length = Integer.parseInt(headerContentLength);
+            char[] buffer = new char[length];
+            int readBytes = reader.read(buffer, 0, length);
+            if (readBytes > length){
+                throw new RuntimeException("Invalid content length");
+            }
+            this.body = new String(buffer).getBytes(StandardCharsets.UTF_8);
+        } else {
+            char[] buffer = new char[1024];
+            ByteArrayOutputStream bodyBuffer = new ByteArrayOutputStream();
+            for(int readBytes; (readBytes = reader.read(buffer)) != -1;) {
+                bodyBuffer.write(new String(buffer, 0, readBytes).getBytes(StandardCharsets.UTF_8));
+            }
+            this.body = bodyBuffer.toByteArray();
         }
-        this.body = buffer.toByteArray();
         logger.info("Body parsed!");
     }
 
