@@ -15,8 +15,6 @@ public class HttpRequest {
     Map<String, String> headers = new HashMap<>();
     byte[] body;
 
-    Logger logger = Logger.getLogger(this.getClass().getName());
-
     public HttpRequest(InputStream in) throws IOException {
         InputStreamReader inputStreamReader = new InputStreamReader(in);
         parseRequestLine(inputStreamReader);
@@ -25,7 +23,7 @@ public class HttpRequest {
     }
 
     public void parseRequestLine(InputStreamReader reader) throws IOException {
-        logger.info("Parsing request line...");
+        System.out.println("Parsing request line...");
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
         for (int nextByte; (nextByte = reader.read()) != -1; ) {
@@ -34,7 +32,7 @@ public class HttpRequest {
         }
 
         String requestLine = buffer.toString(StandardCharsets.UTF_8);
-        logger.info("Request line: " + requestLine);
+        System.out.println("Request line: " + requestLine);
         String[] pieces = requestLine.split(" ");
 
         if (pieces.length != 3) {
@@ -49,17 +47,17 @@ public class HttpRequest {
             throw new IllegalArgumentException("Wrong version! keep using HTTP/1.1 please :)");
         }
 
-        logger.info("Request line parsed!");
+        System.out.println("Request line parsed!");
     }
 
     public void parseHeaders(InputStreamReader reader) throws IOException {
-        logger.info("Parsing headers...");
+        System.out.println("Parsing headers...");
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         for (int nextByte; (nextByte = reader.read()) != -1; ) {
             if (nextByte == '\r') {
                 if(buffer.size() == 0) break;
                 String line = buffer.toString(StandardCharsets.UTF_8);
-                logger.info("Header: " + line);
+                System.out.println("Header: " + line);
                 String[] header = line.split(": ");
                 String key = header[0];
                 String value = header[1];
@@ -76,11 +74,11 @@ public class HttpRequest {
             throw new IOException("Malformed header: expected '\\n' after '\\r'");
         }
 
-        logger.info("All headers parsed!");
+        System.out.println("All headers parsed!");
     }
 
     public void parseBody(InputStreamReader reader) throws IOException {
-        logger.info("Parsing body...");
+        System.out.println("Parsing body...");
         String headerContentLength = headers.get("Content-Length");
         if (headerContentLength != null) {
             int length = Integer.parseInt(headerContentLength);
@@ -98,7 +96,7 @@ public class HttpRequest {
             }
             this.body = bodyBuffer.toByteArray();
         }
-        logger.info("Body parsed!");
+        System.out.println("Body parsed!");
     }
 
     public String readBodyAsString() {
